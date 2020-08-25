@@ -1,31 +1,46 @@
 import React from 'react';
 import { Form, Formik } from "formik";
-import { FormControl, FormLabel, Input, FormErrorMessage } from '@chakra-ui/core';
+import { FormControl, FormLabel, Input, FormErrorMessage, Box, Button } from '@chakra-ui/core';
+import Wrapper from '../components/Wrapper';
+import InputField from '../components/InputField';
 interface RegisterProps {
 
 }
 
 const Register: React.FC<RegisterProps> = ({ }) => {
     return (
-        <Formik
-            initialValues={{ username: "", password: "" }}
-            onSubmit={(values) => {
-                console.log(values);
+        <Wrapper variant="small">
+            <Formik
+                initialValues={{ username: "", password: "" }}
+                onSubmit={(values) => {
+                    console.log(values);
 
-            }}
-        >
-            {
-                ({ values, handleChange }) => (
-                    <Form>
-                        <FormControl>
-                            <FormLabel htmlFor="username">Username</FormLabel>
-                            <Input value={values.username} onChange={handleChange} id="username" placeholder="username" />
-                            {/* <FormErrorMessage>{form.errors.name}</FormErrorMessage> */}
-                        </FormControl>
-                    </Form>
-                )
-            }
-        </Formik>
+                }}
+            >
+                {
+                    ({ values, handleChange, isSubmitting }) => (
+                        <Form>
+                            <InputField
+                                name="username"
+                                placeholder="username"
+                                label="Username"
+                            />
+                            <Box mt={4}>
+                                <InputField
+                                    name="password"
+                                    placeholder="password"
+                                    label="Password"
+                                    type="password"
+                                />
+                            </Box>
+                            <Button mt={4} type="submit" isLoading={isSubmitting} variantColor="teal">
+                                Register
+                            </Button>
+                        </Form>
+                    )
+                }
+            </Formik>
+        </Wrapper>
     );
 };
 export default Register;
