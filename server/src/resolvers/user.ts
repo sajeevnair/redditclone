@@ -2,23 +2,23 @@ import { User } from "../entities/User";
 import { MyContext } from "src/types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import argon2 from "argon2";
-import { UniqueConstraintViolationException } from "@mikro-orm/core/dist/exceptions";
+import { EntityManager } from "@mikro-orm/postgresql";
 
 @InputType()
 class UsernamePasswordInput {
     @Field()
-    username: string;
+    username!: string;
     @Field()
-    password: string;
+    password!: string;
 }
 
 @ObjectType()
 class FieldError {
     @Field()
-    field: String;
+    field!: String;
 
     @Field()
-    message: String;
+    message!: String;
 }
 
 @ObjectType()
@@ -85,14 +85,23 @@ export class UserResolver {
 
 
         const pwd = await argon2.hash(options.password);
-        const user = em.create(User, { username: options.username, password: pwd });
-
+        let user;
         try {
-            await em.persistAndFlush(user);
+            const result = await (em as EntityManager)
+                .createQueryBuilder(User)
+                .getKnexQuery()
+                .insert({
+                    username: options.username,
+                    password: pwd,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+
+                }).returning("*");
+            user = result[0];
         } catch (error) {
             console.log({ error });
 
-            if (error instanceof UniqueConstraintViolationException) {
+            if (error.code === "23505") {
                 return {
                     errors: [
                         {
