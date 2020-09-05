@@ -15,6 +15,7 @@
   "author": "Sajeev Nair",
   "license": "ISC",
   "devDependencies": {
+    "@tsconfig/node12": "^1.0.7",
     "@types/connect-redis": "^0.0.14",
     "@types/express": "^4.17.7",
     "@types/express-session": "^1.17.0",
