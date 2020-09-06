@@ -1,6 +1,5 @@
 import { ThemeProvider, CSSReset, ColorModeProvider } from '@chakra-ui/core';
-import { Cache, cacheExchange, query, QueryInput } from '@urql/exchange-graphcache';
-import { info } from 'console';
+import { Cache, cacheExchange, QueryInput } from '@urql/exchange-graphcache';
 import { Provider, createClient, dedupExchange, fetchExchange } from "urql";
 import { LoginMutation, MeDocument, MeQuery, RegisterMutation } from '../generated/graphql';
 import theme from '../theme';
