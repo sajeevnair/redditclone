@@ -1,33 +1,33 @@
-import { User } from "../entities/User";
-import { MyContext } from "src/types";
-import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
-import argon2 from "argon2";
-import { EntityManager } from "@mikro-orm/postgresql";
+import { User } from "../entities/User"
+import { MyContext } from "src/types"
+import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql"
+import argon2 from "argon2"
+import { EntityManager } from "@mikro-orm/postgresql"
 
 @InputType()
 class UsernamePasswordInput {
     @Field()
-    username!: string;
+    username!: string
     @Field()
-    password!: string;
+    password!: string
 }
 
 @ObjectType()
 class FieldError {
     @Field()
-    field!: String;
+    field!: String
 
     @Field()
-    message!: String;
+    message!: String
 }
 
 @ObjectType()
 class UserResponse {
     @Field(() => [FieldError], { nullable: true })
-    errors?: FieldError[];
+    errors?: FieldError[]
 
     @Field(() => User, { nullable: true })
-    user?: User;
+    user?: User
 }
 
 @Resolver()
@@ -39,16 +39,16 @@ export class UserResolver {
     ): Promise<User | null> {
 
         if (!req.session!.userId) {
-            return null;
+            return null
         }
 
         try {
-            const user = await em.findOne(User, { id: req.session!.userId });
-            return user;
+            const user = await em.findOne(User, { id: req.session!.userId })
+            return user
         } catch (error) {
-            console.log(error.message);
+            console.log(error.message)
 
-            return null;
+            return null
         }
 
     }
@@ -67,7 +67,7 @@ export class UserResolver {
 
                     }
                 ]
-            };
+            }
         }
 
         if (options.password.length < 3) {
@@ -79,13 +79,13 @@ export class UserResolver {
 
                     }
                 ]
-            };
+            }
         }
 
 
 
-        const pwd = await argon2.hash(options.password);
-        let user;
+        const pwd = await argon2.hash(options.password)
+        let user
         try {
             const result = await (em as EntityManager)
                 .createQueryBuilder(User)
@@ -96,10 +96,10 @@ export class UserResolver {
                     created_at: new Date(),
                     updated_at: new Date(),
 
-                }).returning("*");
-            user = result[0];
+                }).returning("*")
+            user = result[0]
         } catch (error) {
-            console.log({ error });
+            console.log({ error })
 
             if (error.code === "23505") {
                 return {
@@ -109,7 +109,7 @@ export class UserResolver {
                             message: "This username already exists"
                         }
                     ]
-                };
+                }
             }
 
             return {
@@ -119,12 +119,12 @@ export class UserResolver {
                         message: error.message
                     }
                 ]
-            };
+            }
         }
-        req.session!.userId = user.id;
+        req.session!.userId = user.id
         return {
             user
-        };
+        }
     };
 
     @Mutation(() => UserResponse)
@@ -132,7 +132,7 @@ export class UserResolver {
         @Arg('options') options: UsernamePasswordInput,
         @Ctx() { em, req }: MyContext
     ): Promise<UserResponse> {
-        const user = await em.findOne(User, { username: options.username });
+        const user = await em.findOne(User, { username: options.username })
         if (!user) {
             return {
                 errors: [
@@ -141,9 +141,9 @@ export class UserResolver {
                         message: "That username does not exist"
                     }
                 ]
-            };
+            }
         }
-        const valid = await argon2.verify(user.password, options.password);
+        const valid = await argon2.verify(user.password, options.password)
 
         if (!valid) {
             return {
@@ -153,13 +153,29 @@ export class UserResolver {
                         message: "incorrect password"
                     }
                 ]
-            };
+            }
         }
-        req.session!.userId = user.id;
+        req.session!.userId = user.id
         return {
             user
-        };
+        }
 
+    };
+
+    @Mutation(() => Boolean)
+    logout(@Ctx() { req, res }: MyContext) {
+        return new Promise((resolve) =>
+            req.session?.destroy(err => {
+                res.clearCookie("qid")
+                if (err) {
+                    console.log(err)
+
+                    resolve(false)
+                    return
+                }
+                resolve(true)
+            })
+        )
     };
 }
 
