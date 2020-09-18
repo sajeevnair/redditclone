@@ -1,8 +1,8 @@
-import { ThemeProvider, CSSReset, ColorModeProvider } from '@chakra-ui/core';
-import { Cache, cacheExchange, QueryInput } from '@urql/exchange-graphcache';
-import { Provider, createClient, dedupExchange, fetchExchange } from "urql";
-import { LoginMutation, MeDocument, MeQuery, RegisterMutation } from '../generated/graphql';
-import theme from '../theme';
+import { ThemeProvider, CSSReset, ColorModeProvider } from '@chakra-ui/core'
+import { Cache, cacheExchange, QueryInput } from '@urql/exchange-graphcache'
+import { Provider, createClient, dedupExchange, fetchExchange } from "urql"
+import { LoginMutation, LogoutMutation, MeDocument, MeQuery, RegisterMutation } from '../generated/graphql'
+import theme from '../theme'
 
 function betterUpdateQuery<Result, Query>(
   cache: Cache,
@@ -10,7 +10,7 @@ function betterUpdateQuery<Result, Query>(
   result: any,
   fn: (r: Result, q: Query) => Query
 ) {
-  return cache.updateQuery(qi, (data) => fn(result, data as any) as any);
+  return cache.updateQuery(qi, (data) => fn(result, data as any) as any)
 };
 
 const client = createClient({
@@ -21,6 +21,16 @@ const client = createClient({
   exchanges: [dedupExchange, cacheExchange({
     updates: {
       Mutation: {
+        logout: (_result, args, cache, info) => {
+          betterUpdateQuery<LogoutMutation, MeQuery>(
+            cache,
+            { query: MeDocument },
+            _result,
+            () => ({
+              me: null
+            })
+          )
+        },
         login: (result, args, cache, info) => {
           betterUpdateQuery<LoginMutation, MeQuery>(
             cache,
@@ -28,14 +38,14 @@ const client = createClient({
             result,
             (result, query) => {
               if (result.login.errors) {
-                return query;
+                return query
               } else {
                 return {
                   me: result.login.user,
-                };
+                }
               }
             }
-          );
+          )
         },
         register: (result, args, cache, info) => {
           betterUpdateQuery<RegisterMutation, MeQuery>(
@@ -44,19 +54,19 @@ const client = createClient({
             result,
             (result, query) => {
               if (result.register.errors) {
-                return query;
+                return query
               } else {
                 return {
                   me: result.register.user,
-                };
+                }
               }
             }
-          );
+          )
         }
       }
     }
   }), fetchExchange]
-});
+})
 
 
 
@@ -71,7 +81,7 @@ function MyApp({ Component, pageProps }: any) {
       </ThemeProvider>
     </Provider>
 
-  );
+  )
 }
 
-export default MyApp;
+export default MyApp
